@@ -22,16 +22,19 @@ const OP = (nInputs, nOutputs, fn) => (program, ip, modes) => {
   return ip;
 };
 
-module.exports = (program, input, res = 0) => {
+module.exports = (program, inputs, res = 0) => {
+  inputs = Array.isArray(inputs) ? inputs : [inputs]; // compat
+  let ic = 0; // input counter
+  let output;
   const OPS = {
     // sum
     1: OP(2, 1, (a, b) => a + b),
     // mul
     2: OP(2, 1, (a, b) => a * b),
     // input
-    3: OP(0, 1, () => input),
+    3: OP(0, 1, () => inputs[ic++]),
     // output
-    4: OP(1, 0, console.log),
+    4: OP(1, 0, (o) => { output = o; console.log(o); }),
     // jump-if-true
     5: OP(2, 0, (c, ip) => [c != 0 ? ip : undefined]),
     // jump-if-false
@@ -46,7 +49,7 @@ module.exports = (program, input, res = 0) => {
     opparam = program[ip++].toString();
     op = Number(opparam.substr(-2));
     modes = opparam.substring(0, opparam.length - 2).split('').reverse().map(Number);
-    if (op === 99) return program[res];
+    if (op === 99) return output || program[res];
     ip = OPS[op](program, ip, modes);
   }
 }
